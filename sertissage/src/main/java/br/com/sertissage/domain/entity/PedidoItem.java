@@ -1,7 +1,11 @@
 package br.com.sertissage.domain.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -12,21 +16,36 @@ public class PedidoItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pedido_id", nullable = false)
     private Pedido pedido;
 
-    @ManyToOne
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "material_id", nullable = false)
     private Material material;
 
-    private Integer quantidade;
-
+    // Peso em gramas deste item — usado para calcular saída de estoque
+    @NotNull
+    @Positive
+    @Column(nullable = false, precision = 10, scale = 3)
     private BigDecimal pesoGramas;
 
+    @Column(columnDefinition = "TEXT")
     private String observacao;
 
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     public PedidoItem() {}
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Getters e Setters
 
     public UUID getId() {
         return id;
@@ -48,14 +67,6 @@ public class PedidoItem {
         this.material = material;
     }
 
-    public Integer getQuantidade() {
-        return quantidade;
-    }
-
-    public void setQuantidade(Integer quantidade) {
-        this.quantidade = quantidade;
-    }
-
     public BigDecimal getPesoGramas() {
         return pesoGramas;
     }
@@ -70,5 +81,9 @@ public class PedidoItem {
 
     public void setObservacao(String observacao) {
         this.observacao = observacao;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }
