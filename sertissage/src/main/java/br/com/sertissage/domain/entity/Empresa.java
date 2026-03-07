@@ -2,10 +2,17 @@ package br.com.sertissage.domain.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "empresa")
 public class Empresa {
@@ -22,50 +29,16 @@ public class Empresa {
     private String nomeFantasia;
 
     @NotBlank
+    @Pattern(regexp = "\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}", 
+             message = "CNPJ deve estar no formato XX.XXX.XXX/XXXX-XX")
     @Column(nullable = false, unique = true, length = 18)
     private String cnpj;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public Empresa() {}
-
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    // Getters e Setters
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getRazaoSocial() {
-        return razaoSocial;
-    }
-
-    public void setRazaoSocial(String razaoSocial) {
-        this.razaoSocial = razaoSocial;
-    }
-
-    public String getNomeFantasia() {
-        return nomeFantasia;
-    }
-
-    public void setNomeFantasia(String nomeFantasia) {
-        this.nomeFantasia = nomeFantasia;
-    }
-
-    public String getCnpj() {
-        return cnpj;
-    }
-
-    public void setCnpj(String cnpj) {
-        this.cnpj = cnpj;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 }

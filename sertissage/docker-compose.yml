@@ -6,15 +6,12 @@ services:
     image: postgres:16
     container_name: sertissage-db
     restart: always
-
     environment:
       POSTGRES_DB: sertissage
-      POSTGRES_USER: sertissage_admin
-      POSTGRES_PASSWORD: Serti@ssage4738
-
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

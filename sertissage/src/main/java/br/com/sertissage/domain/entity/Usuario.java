@@ -3,13 +3,24 @@ package br.com.sertissage.domain.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "usuario")
-public class Usuario {
+public class Usuario implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -26,11 +37,15 @@ public class Usuario {
 
     @NotBlank
     @Column(nullable = false)
-    private String senha;
+    private String senha; // Será criptografada com BCrypt
 
-    // Role simples para o MVP — evolui para enum ou tabela na fase 2
     @Column(nullable = false)
+    @Builder.Default
     private String role = "ROLE_USER";
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean ativo = true;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -39,60 +54,48 @@ public class Usuario {
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    public Usuario() {}
-
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        if (this.ativo == null) {
+            this.ativo = true;
+        }
     }
 
-    // Getters e Setters
+    // ========== Implementação UserDetails ==========
 
-    public UUID getId() {
-        return id;
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(this.role));
     }
 
-    public String getNome() {
-        return nome;
+    @Override
+    public String getPassword() {
+        return this.senha;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    @Override
+    public String getUsername() {
+        return this.email; // Usamos email como username
     }
 
-    public String getEmail() {
-        return email;
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
     }
 
-    public String getSenha() {
-        return senha;
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
     }
 
-    public void setSenha(String senha) {
-        this.senha = senha;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    @Override
+    public boolean isEnabled() {
+        return this.ativo;
     }
 }

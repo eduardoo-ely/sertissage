@@ -1,13 +1,23 @@
 package br.com.sertissage.domain.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "cliente")
+@Table(name = "cliente", indexes = {
+    @Index(name = "idx_cliente_empresa", columnList = "empresa_id"),
+    @Index(name = "idx_cliente_nome", columnList = "nome")
+})
 public class Cliente {
 
     @Id
@@ -21,6 +31,7 @@ public class Cliente {
     @Column
     private String telefone;
 
+    @Email
     @Column
     private String email;
 
@@ -34,60 +45,8 @@ public class Cliente {
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    public Cliente() {}
-
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    // Getters e Setters
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getObservacao() {
-        return observacao;
-    }
-
-    public void setObservacao(String observacao) {
-        this.observacao = observacao;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 }

@@ -4,12 +4,22 @@ import br.com.sertissage.domain.enums.TipoMaterial;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
-@Table(name = "material")
+@Table(name = "material", indexes = {
+    @Index(name = "idx_material_empresa", columnList = "empresa_id"),
+    @Index(name = "idx_material_tipo", columnList = "tipo"),
+    @Index(name = "idx_material_ativo", columnList = "ativo")
+})
 public class Material {
 
     @Id
@@ -25,8 +35,8 @@ public class Material {
     @Column(nullable = false)
     private TipoMaterial tipo;
 
-    // Ativo permite desativar materiais sem deletar histórico
     @Column(nullable = false)
+    @Builder.Default
     private Boolean ativo = true;
 
     @Column(nullable = false, updatable = false)
@@ -39,61 +49,16 @@ public class Material {
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    public Material() {}
-
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+        if (this.ativo == null) {
+            this.ativo = true;
+        }
     }
 
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
-    }
-
-    // Getters e Setters
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public TipoMaterial getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(TipoMaterial tipo) {
-        this.tipo = tipo;
-    }
-
-    public Boolean getAtivo() {
-        return ativo;
-    }
-
-    public void setAtivo(Boolean ativo) {
-        this.ativo = ativo;
-    }
-
-    public Empresa getEmpresa() {
-        return empresa;
-    }
-
-    public void setEmpresa(Empresa empresa) {
-        this.empresa = empresa;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
     }
 }
