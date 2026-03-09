@@ -1,9 +1,10 @@
 package br.com.sertissage.domain.enums;
 
-public enum TipoMaterial {
+public enum TipoCategoria {
 
     METAL,
     PEDRA,
-    INSUMO
+    INSUMO,
+    RELOJOARIA
 
 }
