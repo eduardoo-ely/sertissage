@@ -1,4 +1,4 @@
-package br.com.sertissage.repository;
+package br.com.sertissage.domain.repository;
 
 import br.com.sertissage.domain.entity.CategoriaMaterial;
 import br.com.sertissage.domain.enums.TipoCategoria;

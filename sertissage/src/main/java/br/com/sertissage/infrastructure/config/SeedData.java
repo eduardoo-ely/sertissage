@@ -1,4 +1,4 @@
-package br.com.sertissage.config;
+package br.com.sertissage.infrastructure.config;
 
 import br.com.sertissage.domain.entity.CategoriaMaterial;
 import br.com.sertissage.domain.entity.Material;

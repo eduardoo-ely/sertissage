@@ -28,7 +28,7 @@ public class Material {
     // Categoria global — ex: METAL, PEDRA, INSUMO, RELOJOARIA
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id", nullable = false)
+    @JoinColumn(name = "empresa_id", nullable = true)
     private CategoriaMaterial categoria;
 
     // Unidade de medida — gramas para metais, quilates para pedras, unidade para insumos/relojoaria
@@ -53,7 +53,16 @@ public class Material {
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    public Material() {}
+    public Material(String nome, String descricao, 
+                CategoriaMaterial categoria, String unidadeMedida) {
+    this.nome = nome;
+    this.descricao = descricao;
+    this.categoria = categoria;
+    this.unidadeMedida = unidadeMedida;
+    this.empresa = null;
+    this.ativo = true;
+    }
+
 
     @PrePersist
     public void prePersist() {
