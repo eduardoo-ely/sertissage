@@ -17,74 +17,95 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // ── Validação de campos (Bean Validation) ───────────────────────────────
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request) {
-        
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+            String field = ((FieldError) error).getField();
+            errors.put(field, error.getDefaultMessage());
         });
 
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setTimestamp(LocalDateTime.now());
-        errorResponse.setStatus(HttpStatus.BAD_REQUEST.value());
-        errorResponse.setError("Validation Error");
-        errorResponse.setMessage("Erro de validação nos campos");
-        errorResponse.setPath(request.getRequestURI());
-        errorResponse.setValidationErrors(errors);
+        ErrorResponse response = new ErrorResponse();
+        response.setTimestamp(LocalDateTime.now());
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setError("Validation Error");
+        response.setMessage("Erro de validação nos campos");
+        response.setPath(request.getRequestURI());
+        response.setValidationErrors(errors);
 
-        return ResponseEntity.badRequest().body(errorResponse);
+        return ResponseEntity.badRequest().body(response);
     }
 
-    @ExceptionHandler({BadCredentialsException.class})
-    public ResponseEntity<ErrorResponse> handleBadCredentials(
-            BadCredentialsException ex,
-            HttpServletRequest request) {
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-            LocalDateTime.now(),
-            HttpStatus.UNAUTHORIZED.value(),
-            "Unauthorized",
-            "Email ou senha inválidos",
-            request.getRequestURI()
-        );
+    // ── Recurso não encontrado ───────────────────────────────────────────────
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(
+            ResourceNotFoundException ex, HttpServletRequest request) {
+
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
+    }
+
+    // ── Regras de negócio ────────────────────────────────────────────────────
+
+    @ExceptionHandler(EstoqueInsuficienteException.class)
+    public ResponseEntity<ErrorResponse> handleEstoqueInsuficiente(
+            EstoqueInsuficienteException ex, HttpServletRequest request) {
+
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, "Estoque Insuficiente", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(TransicaoStatusInvalidaException.class)
+    public ResponseEntity<ErrorResponse> handleTransicaoInvalida(
+            TransicaoStatusInvalidaException ex, HttpServletRequest request) {
+
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, "Transição Inválida", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(RegraNegocioException.class)
+    public ResponseEntity<ErrorResponse> handleRegraNegocio(
+            RegraNegocioException ex, HttpServletRequest request) {
+
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, "Regra de Negócio", ex.getMessage(), request);
+    }
+
+    // ── Autenticação ─────────────────────────────────────────────────────────
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(
+            BadCredentialsException ex, HttpServletRequest request) {
+
+        return build(HttpStatus.UNAUTHORIZED, "Unauthorized", "Email ou senha inválidos", request);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(
-            UsernameNotFoundException ex,
-            HttpServletRequest request) {
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-            LocalDateTime.now(),
-            HttpStatus.NOT_FOUND.value(),
-            "Not Found",
-            ex.getMessage(),
-            request.getRequestURI()
-        );
+            UsernameNotFoundException ex, HttpServletRequest request) {
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
-            Exception ex,
-            HttpServletRequest request) {
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-            LocalDateTime.now(),
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Internal Server Error",
-            "Erro interno do servidor: " + ex.getMessage(),
-            request.getRequestURI()
-        );
+    // ── Fallback ─────────────────────────────────────────────────────────────
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneric(
+            Exception ex, HttpServletRequest request) {
+
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "Erro interno do servidor", request);
+    }
+
+    // ── Helper ───────────────────────────────────────────────────────────────
+
+    private ResponseEntity<ErrorResponse> build(
+            HttpStatus status, String error, String message, HttpServletRequest request) {
+
+        ErrorResponse response = new ErrorResponse(
+            LocalDateTime.now(), status.value(), error, message, request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(response);
     }
 }
