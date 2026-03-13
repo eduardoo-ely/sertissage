@@ -28,18 +28,14 @@ public interface EstoqueMovimentacaoRepository extends JpaRepository<EstoqueMovi
         @Param("materialId") UUID materialId
     );
 
-    // Histórico de movimentações de um material — ordenado do mais recente
     List<EstoqueMovimentacao> findByEmpresaIdAndMaterialIdOrderByCreatedAtDesc(
         UUID empresaId, UUID materialId
     );
 
-    // Histórico geral da empresa — para auditoria
     List<EstoqueMovimentacao> findByEmpresaIdOrderByCreatedAtDesc(UUID empresaId);
 
-    // Movimentações de um pedido específico
     List<EstoqueMovimentacao> findByPedidoId(UUID pedidoId);
 
-    // Material mais utilizado no período — para relatórios
     @Query("SELECT m.material.id, m.material.nome, COALESCE(SUM(m.quantidadeGramas), 0) as total " +
            "FROM EstoqueMovimentacao m " +
            "WHERE m.empresa.id = :empresaId " +

@@ -23,16 +23,13 @@ public interface MaterialRepository extends JpaRepository<Material, UUID> {
         @Param("tipoCategoria") TipoCategoria tipoCategoria
     );
 
-    // Busca por ID garantindo que é global ou pertence à empresa
     @Query("SELECT m FROM Material m WHERE m.id = :id AND (m.empresa IS NULL OR m.empresa.id = :empresaId)")
     Optional<Material> findByIdAndEmpresaIdOrGlobal(
         @Param("id") UUID id,
         @Param("empresaId") UUID empresaId
     );
 
-    // Apenas materiais exclusivos da empresa (sem globais)
     List<Material> findByEmpresaId(UUID empresaId);
 
-    // Verifica duplicidade de nome dentro da empresa
     boolean existsByNomeAndEmpresaId(String nome, UUID empresaId);
 }

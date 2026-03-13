@@ -18,7 +18,6 @@ public class CategoriaMaterial {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // Identificador semântico para uso em regras de negócio no Service
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, unique = true)
@@ -31,7 +30,6 @@ public class CategoriaMaterial {
     @Column(columnDefinition = "TEXT")
     private String descricao;
 
-    // Relacionamento reverso — útil para consultas e relatórios
     @OneToMany(mappedBy = "categoria", fetch = FetchType.LAZY)
     private List<Material> materiais = new ArrayList<>();
 

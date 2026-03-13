@@ -10,9 +10,7 @@ import java.util.UUID;
 @Repository
 public interface PedidoItemRepository extends JpaRepository<PedidoItem, UUID> {
 
-    // Itens de um pedido — usado pelo EstoqueService ao gerar saídas
     List<PedidoItem> findByPedidoId(UUID pedidoId);
 
-    // Verifica se algum pedido usa determinado material
     boolean existsByMaterialId(UUID materialId);
 }

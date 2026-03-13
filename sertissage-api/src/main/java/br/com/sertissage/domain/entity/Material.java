@@ -33,7 +33,7 @@ public class Material {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "categoria_id", nullable = false)   // ← CORRIGIDO (era empresa_id)
+    @JoinColumn(name = "categoria_id", nullable = false) 
     private CategoriaMaterial categoria;
 
     @Column(nullable = false)
@@ -42,8 +42,6 @@ public class Material {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    // empresa = null → material global (visível para todas as empresas)
-    // empresa preenchida → exclusivo da empresa
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = true)
     private Empresa empresa;
@@ -54,7 +52,6 @@ public class Material {
     @Column
     private LocalDateTime updatedAt;
 
-    // Construtor usado pelo SeedData para materiais globais
     public Material(String nome, String observacao,
                     CategoriaMaterial categoria, String unidadeMedida) {
         this.nome = nome;
@@ -65,7 +62,6 @@ public class Material {
         this.ativo = true;
     }
 
-    // Helper — true se material pertence ao catálogo global
     public boolean isGlobal() {
         return this.empresa == null;
     }

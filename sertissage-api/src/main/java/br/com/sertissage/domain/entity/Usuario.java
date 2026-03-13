@@ -76,7 +76,7 @@ public class Usuario implements UserDetails {
 
     @Override
     public String getUsername() {
-        return this.email; // Usamos email como username
+        return this.email; 
     }
 
     @Override

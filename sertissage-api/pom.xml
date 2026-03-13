@@ -41,6 +41,13 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 		
+		<!-- H2 — banco em memória para apresentação -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 		<!-- 🔑 JWT -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
