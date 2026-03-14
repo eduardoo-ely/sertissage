@@ -73,6 +73,9 @@ public class SecurityConfig {
                 // Health check
                 .requestMatchers("/actuator/health").permitAll()
                 
+                // Adicione esta linha abaixo para libertar o mock do estoque:
+                .requestMatchers("/api/estoque/**").permitAll() 
+                
                 // Todos os outros endpoints requerem autenticação
                 .anyRequest().authenticated()
             )
