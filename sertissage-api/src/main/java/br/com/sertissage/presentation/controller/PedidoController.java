@@ -104,18 +104,18 @@ public class PedidoController {
                 .build();
 
         if (request.getItens() != null) {
-            List<PedidoItem> itens = new ArrayList<>();
             request.getItens().forEach(itemReq -> {
                 Material material = new Material();
                 material.setId(itemReq.getMaterialId());
+                
                 PedidoItem item = PedidoItem.builder()
                         .material(material)
                         .pesoGramas(itemReq.getPesoGramas())
                         .observacao(itemReq.getObservacao())
                         .build();
-                itens.add(item);
+                        
+                pedido.adicionarItem(item); 
             });
-            pedido.setItens(itens);
         }
 
         return pedido;
