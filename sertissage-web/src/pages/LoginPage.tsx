@@ -31,8 +31,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
     try {
       await onLogin?.(form)
-    } catch {
-      setError("Email ou senha inválidos. Verifique suas credenciais.")
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Email ou senha inválidos."
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -60,7 +61,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <div className="absolute inset-8 border border-primary/8 rotate-45" />
             <div className="absolute inset-16 border border-primary/6 rotate-45" />
             <div className="absolute inset-24 border border-primary/5 rotate-45" />
-            {/* Losango central com gradiente */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div
                 className="w-32 h-32 rotate-45 opacity-[0.06]"
@@ -110,7 +110,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         {/* Card de login */}
         <div className="w-full max-w-sm space-y-8">
 
-          {/* Cabeçalho */}
           <div className="space-y-2">
             <h1 className="font-serif text-3xl font-light text-foreground">
               Acesso
@@ -120,15 +119,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </p>
           </div>
 
-          {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-5">
 
-            {/* Campo Email */}
             <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="text-xs uppercase tracking-widest text-muted-foreground"
-              >
+              <label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">
                 Email
               </label>
               <input
@@ -142,18 +136,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 className={cn(
                   "w-full bg-secondary/60 border border-border/60 rounded-sm px-4 py-3",
                   "text-sm text-foreground placeholder:text-muted-foreground/40",
-                  "focus:outline-none focus:border-primary/60 focus:bg-secondary/80",
-                  "transition-all duration-200 disabled:opacity-50",
+                  "focus:outline-none focus:border-primary/60 focus:bg-secondary/80 transition-all disabled:opacity-50",
                 )}
               />
             </div>
 
-            {/* Campo Senha */}
             <div className="space-y-2">
-              <label
-                htmlFor="senha"
-                className="text-xs uppercase tracking-widest text-muted-foreground"
-              >
+              <label htmlFor="senha" className="text-xs uppercase tracking-widest text-muted-foreground">
                 Senha
               </label>
               <div className="relative">
@@ -168,8 +157,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   className={cn(
                     "w-full bg-secondary/60 border border-border/60 rounded-sm px-4 py-3 pr-11",
                     "text-sm text-foreground placeholder:text-muted-foreground/40",
-                    "focus:outline-none focus:border-primary/60 focus:bg-secondary/80",
-                    "transition-all duration-200 disabled:opacity-50",
+                    "focus:outline-none focus:border-primary/60 focus:bg-secondary/80 transition-all disabled:opacity-50",
                   )}
                 />
                 <button
@@ -178,35 +166,31 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   tabIndex={-1}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                 >
-                  {showSenha
-                    ? <EyeOff size={15} strokeWidth={1.5} />
-                    : <Eye size={15} strokeWidth={1.5} />
-                  }
+                  {showSenha ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
                 </button>
               </div>
             </div>
 
-            {/* Mensagem de erro */}
             {error && (
               <div className="text-xs text-destructive/90 bg-destructive/10 border border-destructive/20 rounded-sm px-4 py-3">
                 {error}
               </div>
             )}
 
-            {/* Botão */}
             <Button
               type="submit"
               disabled={loading || !form.email || !form.senha}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium tracking-wide h-11 rounded-sm transition-all duration-200"
             >
-              {loading
-                ? <><Loader2 size={14} className="animate-spin" /> Entrando...</>
-                : "Entrar"
-              }
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 size={14} className="animate-spin" /> 
+                  <span>Entrando...</span>
+                </div>
+              ) : "Entrar"}
             </Button>
           </form>
 
-          {/* Divisor + credenciais dev */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="flex-1 h-px bg-border/40" />

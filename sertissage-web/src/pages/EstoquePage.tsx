@@ -5,6 +5,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { api } from "@/lib/api" 
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -61,17 +62,18 @@ export default function EstoquePage({ token }: EstoquePageProps) {
   const [erro, setErro]       = useState<string | null>(null)
   const [expandido, setExpandido] = useState<string | null>(null)
 
-  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-
+  // AJUSTADO: Agora usa o serviço 'api' com Axios
   const carregar = async () => {
     setLoading(true)
     setErro(null)
     try {
-      const res = await fetch("/api/estoque/historico", { headers })
-      if (!res.ok) throw new Error("Erro ao carregar estoque")
-      setMovs(await res.json())
-    } catch (e: unknown) {
-      setErro(e instanceof Error ? e.message : "Erro desconhecido")
+      // O interceptor no api.ts anexa o token automaticamente
+      const res = await api.get("/estoque/historico")
+      setMovs(res.data)
+    } catch (e: any) {
+      // Captura a mensagem de erro formatada pelo Spring Boot
+      const mensagem = e.response?.data?.message || "Erro ao carregar estoque"
+      setErro(mensagem)
     } finally {
       setLoading(false)
     }
@@ -79,7 +81,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
 
   useEffect(() => { carregar() }, [token])
 
-  // Calcula saldos agrupados por material a partir das movimentações
   const saldos = Object.values(
     movs.reduce<Record<string, SaldoItem>>((acc, m) => {
       if (!acc[m.materialId]) {
@@ -102,7 +103,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
   return (
     <div className="space-y-8 max-w-6xl">
 
-      {/* Cabeçalho */}
       <div className="flex items-end justify-between">
         <div className="space-y-1">
           <h1 className="font-serif text-3xl font-light text-foreground">Estoque</h1>
@@ -130,7 +130,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
         </div>
       </div>
 
-      {/* ── Cards de Saldo ─────────────────────────────────────────────── */}
       {!loading && saldos.length > 0 && (
         <div className="space-y-3">
           <h2 className="font-serif text-lg font-light text-foreground/80">Saldos atuais</h2>
@@ -166,21 +165,18 @@ export default function EstoquePage({ token }: EstoquePageProps) {
         </div>
       )}
 
-      {/* ── Histórico de Movimentações ────────────────────────────────── */}
       <div className="space-y-4">
         <h2 className="font-serif text-lg font-light text-foreground/80">
           Histórico de movimentações
         </h2>
 
         <div className="border border-border/40 rounded-sm overflow-hidden">
-          {/* Header */}
           <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-5 py-2.5 bg-secondary/40 border-b border-border/30">
             {["Tipo", "Material", "Quantidade", "Valor total", "Data"].map((h, i) => (
               <span key={i} className="text-xs uppercase tracking-widest text-muted-foreground/60">{h}</span>
             ))}
           </div>
 
-          {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground/40">
               <Loader2 size={14} strokeWidth={1.5} className="animate-spin" />
@@ -188,7 +184,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
             </div>
           )}
 
-          {/* Erro */}
           {!loading && erro && (
             <div className="flex items-center justify-center gap-2 py-16 text-destructive/60">
               <AlertCircle size={14} strokeWidth={1.5} />
@@ -196,7 +191,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
             </div>
           )}
 
-          {/* Vazio */}
           {!loading && !erro && movs.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground/40">
               <AlertCircle size={18} strokeWidth={1.5} />
@@ -204,7 +198,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
             </div>
           )}
 
-          {/* Linhas */}
           {!loading && !erro && movs.map((m, i) => (
             <div key={m.id}>
               <div
@@ -216,7 +209,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
                   expandido === m.id && "bg-secondary/20"
                 )}
               >
-                {/* Ícone de tipo */}
                 <div className={cn(
                   "flex items-center gap-1.5 text-xs font-medium whitespace-nowrap",
                   m.tipo === "ENTRADA" ? "text-emerald-500/80" :
@@ -232,7 +224,6 @@ export default function EstoquePage({ token }: EstoquePageProps) {
                   {m.tipo}
                 </div>
 
-                {/* Material */}
                 <div className="min-w-0">
                   <div className="text-sm text-foreground/80 truncate">{m.materialNome}</div>
                   <div className="text-xs text-muted-foreground/40 truncate mt-0.5">
@@ -240,23 +231,19 @@ export default function EstoquePage({ token }: EstoquePageProps) {
                   </div>
                 </div>
 
-                {/* Quantidade */}
                 <span className="text-sm font-mono tabular-nums text-foreground/70 whitespace-nowrap">
                   {fmt(m.quantidadeGramas)} g
                 </span>
 
-                {/* Valor total */}
                 <span className="text-sm font-mono tabular-nums text-foreground/70 whitespace-nowrap">
                   {m.valorTotal != null ? `R$ ${fmt(m.valorTotal, 2)}` : "—"}
                 </span>
 
-                {/* Data */}
                 <span className="text-xs text-muted-foreground/50 whitespace-nowrap">
                   {formatDate(m.createdAt)}
                 </span>
               </div>
 
-              {/* Painel expandido: observação */}
               {expandido === m.id && (
                 <div className="px-5 py-3 bg-secondary/10 border-b border-border/20 text-xs text-muted-foreground/60 space-y-1">
                   <div className="flex gap-4">

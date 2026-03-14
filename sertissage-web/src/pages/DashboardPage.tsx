@@ -1,3 +1,4 @@
+import { api } from "@/lib/api"
 import { useEffect, useState } from "react"
 import {
   Package, Layers, Users, TrendingUp, TrendingDown,
@@ -62,21 +63,22 @@ export default function DashboardPage({ token, onNavigate }: DashboardProps) {
   const [pedidos, setPedidos] = useState<PedidoRecente[]>([])
   const [loading, setLoading] = useState(true)
 
-  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-
+  // Ajustado: Agora utiliza a instância central do Axios (api.ts)
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/pedidos", { headers })
-        if (res.ok) {
-          const data = await res.json()
-          setPedidos(data.slice(0, 5))
-        }
-      } catch { /* silently fail — mostra dados placeholder */ }
-      finally { setLoading(false) }
+        // O token JWT é anexado automaticamente pelo interceptor do Axios
+        const res = await api.get("/pedidos")
+        // No Axios, os dados vêm dentro da propriedade .data
+        setPedidos(res.data.slice(0, 5))
+      } catch (error) {
+        console.error("Erro ao carregar dados do dashboard:", error)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
-  }, [token])
+  }, []) // Removido o 'token' da dependência pois o interceptor já o gerencia
 
   // Métricas derivadas dos pedidos carregados
   const ativos = pedidos.filter(
@@ -138,7 +140,6 @@ export default function DashboardPage({ token, onNavigate }: DashboardProps) {
               key={m.label}
               className="bg-card border border-border/50 rounded-sm p-5 flex flex-col gap-3 relative overflow-hidden group hover:border-border/80 transition-colors"
             >
-              {/* Linha de topo animada */}
               <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
               <div className="flex justify-between items-start">
@@ -198,7 +199,6 @@ export default function DashboardPage({ token, onNavigate }: DashboardProps) {
         </div>
 
         <div className="border border-border/40 rounded-sm overflow-hidden">
-          {/* Cabeçalho da tabela */}
           <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-2.5 bg-secondary/40 border-b border-border/30">
             {["Cliente", "Tipo", "Status", "Data"].map((h) => (
               <span key={h} className="text-xs uppercase tracking-widest text-muted-foreground/60">
@@ -207,7 +207,6 @@ export default function DashboardPage({ token, onNavigate }: DashboardProps) {
             ))}
           </div>
 
-          {/* Linhas */}
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-muted-foreground/40">
               <Clock size={14} strokeWidth={1.5} className="animate-pulse" />

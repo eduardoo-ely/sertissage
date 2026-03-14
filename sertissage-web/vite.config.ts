@@ -13,7 +13,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target: "https://miniature-space-goldfish-9795q5wq96gvcj59-8080.app.github.dev/",
         changeOrigin: true,
         secure: false,
       },

@@ -1,3 +1,4 @@
+import { api } from "@/lib/api"
 import { useEffect, useState } from "react"
 import {
   Users, Plus, Search, RotateCcw, AlertCircle,
@@ -54,22 +55,24 @@ export default function ClientesPage({ token }: ClientesPageProps) {
   const [busca, setBusca]         = useState("")
   const [selecionado, setSelecionado] = useState<Cliente | null>(null)
 
-  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-
+  // AJUSTADO: Agora utiliza a instância central do Axios (api.ts)
   const carregar = async (query?: string) => {
     setLoading(true)
     setErro(null)
     try {
       const url = query
-        ? `/api/clientes/buscar?nome=${encodeURIComponent(query)}`
-        : "/api/clientes"
-      const res = await fetch(url, { headers })
-      if (!res.ok) throw new Error("Erro ao carregar clientes")
-      setClientes(await res.json())
-    } catch (e: unknown) {
-      setErro(e instanceof Error ? e.message : "Erro desconhecido")
+        ? `/clientes/buscar?nome=${encodeURIComponent(query)}`
+        : "/clientes"
+      
+      // O token JWT é anexado automaticamente pelo interceptor
+      const res = await api.get(url)
+      setClientes(res.data)
+    } catch (e: any) {
+      const mensagem = e.response?.data?.message || "Erro ao carregar clientes"
+      setErro(mensagem)
     } finally {
-      setLoading(false) }
+      setLoading(false)
+    }
   }
 
   useEffect(() => { carregar() }, [token])

@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage"
 import PedidosPage from "./pages/PedidosPage"
 import EstoquePage from "./pages/EstoquePage"
 import ClientesPage from "./pages/ClientesPage"
+import { api } from "./lib/api"
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -43,7 +44,16 @@ export default function App() {
 
   const handleLogin = async ({ email, senha }: { email: string; senha: string }) => {
     const state = await loginApi(email, senha)
+    
+    localStorage.setItem("token", state.token)
+    
     setAuth(state)
+  }
+
+  const handleLogout = () => {
+    // Limpa o token ao sair
+    localStorage.removeItem("token")
+    setAuth(null)
   }
 
   if (!auth) {
@@ -74,7 +84,7 @@ export default function App() {
       currentPage={page}
       onNavigate={setPage}
       nomeUsuario={auth.nome}
-      onLogout={() => setAuth(null)}
+      onLogout={handleLogout}
     >
       {renderPage()}
     </AppLayout>

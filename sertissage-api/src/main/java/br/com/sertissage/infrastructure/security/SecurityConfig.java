@@ -35,7 +35,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
-    @Value("${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200,http://localhost:5173,http://localhost:8080}")
+    @Value("${CORS_ALLOWED_ORIGINS:*}")
     private String corsAllowedOrigins;
 
     @Bean
@@ -111,32 +111,23 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
 
-        // Origens permitidas
-        List<String> origins = Arrays.asList(corsAllowedOrigins.split(","));
-        config.setAllowedOriginPatterns(origins); // allowedOriginPatterns em vez de setAllowedOrigins
-                                                   // para compatibilidade com credenciais
+    config.setAllowedOriginPatterns(List.of("*")); 
 
-        // Métodos
-        config.setAllowedMethods(Arrays.asList(
-            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"
-        ));
+    // Métodos permitidos
+    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
 
-        // Headers — wildcard
-        config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
+    // Headers e Credenciais necessários para o JWT funcionar
+    config.setAllowedHeaders(List.of("*"));
+    config.setExposedHeaders(List.of("Authorization", "Content-Type"));
+    config.setAllowCredentials(true);
+    config.setMaxAge(3600L);
 
-        // Credenciais
-        config.setAllowCredentials(true);
-
-        // Cache de preflight
-        config.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+}
 }

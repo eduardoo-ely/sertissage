@@ -5,6 +5,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { api } from "@/lib/api" //
 
 // ─── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -59,8 +60,6 @@ const STATUS_DOT: Record<string, string> = {
   CANCELADO:        "bg-destructive/60",
 }
 
-const ALL_STATUS = ["Todos", ...Object.keys(STATUS_LABEL)]
-
 function fmt(v: number | null, decimals = 2) {
   if (v == null) return "—"
   return v.toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
@@ -79,19 +78,17 @@ export default function PedidosPage({ token }: PedidosPageProps) {
   const [filtroStatus, setFiltroStatus] = useState("Todos")
   const [busca, setBusca] = useState("")
   const [expandido, setExpandido] = useState<string | null>(null)
-  const [acao, setAcao] = useState<string | null>(null) // pedido em ação
+  const [acao, setAcao] = useState<string | null>(null)
 
-  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-
+  // Ajustado: Agora usa a instância central do Axios
   const carregar = async () => {
     setLoading(true)
     setErro(null)
     try {
-      const res = await fetch("/api/pedidos", { headers })
-      if (!res.ok) throw new Error("Erro ao carregar pedidos")
-      setPedidos(await res.json())
-    } catch (e: unknown) {
-      setErro(e instanceof Error ? e.message : "Erro desconhecido")
+      const res = await api.get("/pedidos") // O interceptor anexa o token
+      setPedidos(res.data)
+    } catch (e: any) {
+      setErro(e.response?.data?.message || "Erro ao carregar pedidos")
     } finally {
       setLoading(false)
     }
@@ -99,38 +96,34 @@ export default function PedidosPage({ token }: PedidosPageProps) {
 
   useEffect(() => { carregar() }, [token])
 
+  // Ajustado: Uso do api.patch para avançar status
   const avancar = async (id: string) => {
     setAcao(id)
     try {
-      const res = await fetch(`/api/pedidos/${id}/avancar`, { method: "PATCH", headers })
-      if (!res.ok) {
-        const err = await res.json()
-        alert(err.message ?? "Erro ao avançar pedido")
-        return
-      }
+      await api.patch(`/pedidos/${id}/avancar`)
       await carregar()
-    } finally { setAcao(null) }
+    } catch (e: any) {
+      alert(e.response?.data?.message || "Erro ao avançar pedido")
+    } finally {
+      setAcao(null)
+    }
   }
 
+  // Ajustado: Uso do api.patch para cancelar com corpo JSON
   const cancelar = async (id: string) => {
     const motivo = window.prompt("Motivo do cancelamento:")
     if (!motivo) return
     setAcao(id)
     try {
-      const res = await fetch(`/api/pedidos/${id}/cancelar`, {
-        method: "PATCH", headers,
-        body: JSON.stringify({ motivo }),
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        alert(err.message ?? "Erro ao cancelar pedido")
-        return
-      }
+      await api.patch(`/pedidos/${id}/cancelar`, { motivo })
       await carregar()
-    } finally { setAcao(null) }
+    } catch (e: any) {
+      alert(e.response?.data?.message || "Erro ao cancelar pedido")
+    } finally {
+      setAcao(null)
+    }
   }
 
-  // Filtros
   const filtrados = pedidos.filter((p) => {
     const matchStatus = filtroStatus === "Todos" || p.status === filtroStatus
     const matchBusca = busca.trim() === "" ||
@@ -141,8 +134,6 @@ export default function PedidosPage({ token }: PedidosPageProps) {
 
   return (
     <div className="space-y-6 max-w-6xl">
-
-      {/* Cabeçalho */}
       <div className="flex items-end justify-between">
         <div className="space-y-1">
           <h1 className="font-serif text-3xl font-light text-foreground">Pedidos</h1>
@@ -155,9 +146,7 @@ export default function PedidosPage({ token }: PedidosPageProps) {
         </Button>
       </div>
 
-      {/* Controles */}
       <div className="flex flex-wrap gap-3 items-center">
-        {/* Busca */}
         <div className="relative flex-1 min-w-48">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" strokeWidth={1.5} />
           <input
@@ -172,7 +161,6 @@ export default function PedidosPage({ token }: PedidosPageProps) {
           />
         </div>
 
-        {/* Filtro status */}
         <div className="flex gap-1 flex-wrap">
           {["Todos", "ORCAMENTO", "EM_PRODUCAO", "FINALIZADO", "CANCELADO"].map((s) => (
             <button
@@ -190,7 +178,6 @@ export default function PedidosPage({ token }: PedidosPageProps) {
           ))}
         </div>
 
-        {/* Reload */}
         <button
           onClick={carregar}
           disabled={loading}
@@ -200,16 +187,13 @@ export default function PedidosPage({ token }: PedidosPageProps) {
         </button>
       </div>
 
-      {/* Tabela */}
       <div className="border border-border/40 rounded-sm overflow-hidden">
-        {/* Header */}
         <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-5 py-2.5 bg-secondary/40 border-b border-border/30">
           {["Cliente / Descrição", "Tipo", "Status", "Valor", ""].map((h, i) => (
             <span key={i} className="text-xs uppercase tracking-widest text-muted-foreground/60">{h}</span>
           ))}
         </div>
 
-        {/* Estado: loading */}
         {loading && (
           <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground/40">
             <Loader2 size={14} strokeWidth={1.5} className="animate-spin" />
@@ -217,7 +201,6 @@ export default function PedidosPage({ token }: PedidosPageProps) {
           </div>
         )}
 
-        {/* Estado: erro */}
         {!loading && erro && (
           <div className="flex items-center justify-center gap-2 py-16 text-destructive/60">
             <AlertCircle size={14} strokeWidth={1.5} />
@@ -225,26 +208,20 @@ export default function PedidosPage({ token }: PedidosPageProps) {
           </div>
         )}
 
-        {/* Estado: vazio */}
         {!loading && !erro && filtrados.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground/40">
             <AlertCircle size={18} strokeWidth={1.5} />
             <span className="text-sm">Nenhum pedido encontrado</span>
             {busca && (
-              <button
-                onClick={() => setBusca("")}
-                className="flex items-center gap-1 text-xs hover:text-muted-foreground transition-colors mt-1"
-              >
+              <button onClick={() => setBusca("")} className="flex items-center gap-1 text-xs hover:text-muted-foreground transition-colors mt-1">
                 <X size={11} /> Limpar busca
               </button>
             )}
           </div>
         )}
 
-        {/* Linhas */}
         {!loading && !erro && filtrados.map((p, i) => (
           <div key={p.id}>
-            {/* Linha principal */}
             <div
               onClick={() => setExpandido(expandido === p.id ? null : p.id)}
               className={cn(
@@ -254,7 +231,6 @@ export default function PedidosPage({ token }: PedidosPageProps) {
                 expandido === p.id && "bg-secondary/20"
               )}
             >
-              {/* Cliente + descrição */}
               <div className="min-w-0">
                 <div className="text-sm text-foreground/85 truncate">{p.clienteNome}</div>
                 {p.descricao && (
@@ -262,39 +238,27 @@ export default function PedidosPage({ token }: PedidosPageProps) {
                 )}
               </div>
 
-              {/* Tipo */}
               <span className="text-xs text-muted-foreground/60 whitespace-nowrap">
                 {p.tipoPedido === "FABRICACAO" ? "Fabricação" : "Conserto"}
               </span>
 
-              {/* Status */}
               <div className="flex items-center gap-1.5 whitespace-nowrap">
                 <div className={cn("w-1.5 h-1.5 rounded-full", STATUS_DOT[p.status])} />
-                <span className="text-xs text-muted-foreground/80">
-                  {STATUS_LABEL[p.status]}
-                </span>
+                <span className="text-xs text-muted-foreground/80">{STATUS_LABEL[p.status]}</span>
               </div>
 
-              {/* Valor cobrado */}
               <span className="text-sm text-foreground/70 font-mono tabular-nums">
                 {p.precoCobrado != null ? `R$ ${fmt(p.precoCobrado)}` : "—"}
               </span>
 
-              {/* Chevron */}
               {expandido === p.id
                 ? <ChevronDown size={13} className="text-muted-foreground/50" strokeWidth={1.5} />
                 : <ChevronRight size={13} className="text-muted-foreground/30" strokeWidth={1.5} />
               }
             </div>
 
-            {/* Painel expandido */}
             {expandido === p.id && (
-              <div className={cn(
-                "px-5 pb-5 pt-2 bg-secondary/10 border-b border-border/20",
-                "grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6"
-              )}>
-
-                {/* Detalhes financeiros */}
+              <div className="px-5 pb-5 pt-2 bg-secondary/10 border-b border-border/20 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {[
                     { label: "Peso",           value: p.pesoGramas != null ? `${fmt(p.pesoGramas, 3)} g` : "—" },
@@ -308,34 +272,23 @@ export default function PedidosPage({ token }: PedidosPageProps) {
                     { label: "Criado em",      value: formatDate(p.createdAt) },
                   ].map((d) => (
                     <div key={d.label} className="space-y-0.5">
-                      <span className="text-xs uppercase tracking-wider text-muted-foreground/50">
-                        {d.label}
-                      </span>
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground/50">{d.label}</span>
                       <div className="text-sm text-foreground/80 font-mono">{d.value}</div>
                     </div>
                   ))}
                 </div>
 
-                {/* Ações de status */}
                 <div className="flex flex-col gap-2 items-end justify-start shrink-0">
-                  {/* Barra de progresso */}
                   <div className="flex gap-1 mb-2">
                     {STATUS_FLOW.map((s, idx) => {
                       const current = STATUS_FLOW.indexOf(p.status as typeof STATUS_FLOW[number])
                       const done = idx <= current
                       return (
-                        <div
-                          key={s}
-                          className={cn(
-                            "h-1 w-8 rounded-full transition-colors",
-                            done ? "bg-primary/70" : "bg-border/40"
-                          )}
-                        />
+                        <div key={s} className={cn("h-1 w-8 rounded-full transition-colors", done ? "bg-primary/70" : "bg-border/40")} />
                       )
                     })}
                   </div>
 
-                  {/* Botão avançar */}
                   {!["FINALIZADO", "CANCELADO"].includes(p.status) && (
                     <Button
                       size="sm"
@@ -343,17 +296,11 @@ export default function PedidosPage({ token }: PedidosPageProps) {
                       disabled={acao === p.id}
                       className="bg-primary/90 hover:bg-primary text-primary-foreground rounded-sm text-xs h-8 gap-1.5"
                     >
-                      {acao === p.id
-                        ? <Loader2 size={12} className="animate-spin" />
-                        : <ChevronRight size={12} />
-                      }
-                      Avançar para {STATUS_LABEL[
-                        STATUS_FLOW[STATUS_FLOW.indexOf(p.status as typeof STATUS_FLOW[number]) + 1] ?? "FINALIZADO"
-                      ]}
+                      {acao === p.id ? <Loader2 size={12} className="animate-spin" /> : <ChevronRight size={12} />}
+                      Avançar para {STATUS_LABEL[STATUS_FLOW[STATUS_FLOW.indexOf(p.status as typeof STATUS_FLOW[number]) + 1] ?? "FINALIZADO"]}
                     </Button>
                   )}
 
-                  {/* Botão cancelar */}
                   {!["FINALIZADO", "CANCELADO"].includes(p.status) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); cancelar(p.id) }}
@@ -364,14 +311,12 @@ export default function PedidosPage({ token }: PedidosPageProps) {
                     </button>
                   )}
                 </div>
-
               </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* Rodapé de contagem */}
       {!loading && !erro && (
         <p className="text-xs text-muted-foreground/40">
           {filtrados.length} pedido{filtrados.length !== 1 ? "s" : ""}
